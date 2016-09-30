@@ -593,12 +593,6 @@ namespace CNTK
     }
 
     template <typename T>
-    TrainingParameterSchedule<T>::TrainingParameterSchedule(size_t unit, map<size_t, T>&& schedule)
-        : m_schedule(forward<map<size_t, T>>(schedule)), m_unit(unit)
-    {
-    }
-
-    template <typename T>
     TrainingParameterSchedule<T>::TrainingParameterSchedule(const vector<T>& schedule, size_t unit = 1) 
         : m_unit(unit)
     {
@@ -679,16 +673,14 @@ namespace CNTK
         return *this;
     }
 
-    MomentumValuesAsTimeConstants::operator MomentumValuesPerSample() const
+    void MomentumValuesAsTimeConstants::ConvertToPerSampleValues()
     {
-        map<size_t, double> momentumValues;
-        for (const auto& it : m_schedule)
+        for (auto& it : m_schedule)
         {
             double momTC = it.second;
             double momPS = momTC == 0.0 ? 0 : exp(-1.0 / momTC);
-            momentumValues[it.first] = momPS;
+            it.second = momPS;
         }
-        return MomentumValuesPerSample(m_unit, move(momentumValues));
     }
 
     template void DictionaryValue::AllocateDataPtr<NDShape>(const NDShape& value);
@@ -706,5 +698,4 @@ namespace CNTK
     template void DictionaryValue::FreePtrAsType<NDArrayView>();
 
     template class TrainingParameterSchedule<double>;
-    template class TrainingParameterSchedule<int>;
 }

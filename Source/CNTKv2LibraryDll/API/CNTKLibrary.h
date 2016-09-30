@@ -2574,14 +2574,15 @@ namespace CNTK
     };
 
     ///
-    /// A collection of key-value pairs that represents training parameter schedule in 
+    /// A collection of key-value pairs that represents a training parameter schedule in 
     /// terms of the number of processed samples (e.g., learning rate and momentum schedules). 
-    /// This class provides a number of convenience constructors to allow easy conversion 
-    /// from a single value, a vector of values and a list of pairs to the training schedule.
-    /// The class is designed to simplify Learner's factory methods by enabling training parameter 
-    /// specification using a syntax similar to that used in cntk config files. For example,
-    /// a learning rate schedule { { 10, 0.5 }, { 100, 0.3 }, { 20, 0.2 } } is equivalent to 
-    /// 10*0.5:100*0.3:20*0.2 value in a cntk configuration.
+    /// This class is designed to simplify Learner's factory methods and provides a number of 
+    /// convenience constructors to allow easy conversion from a single value, a vector of values 
+    /// and a list of pairs to the training schedule. For example, a learning rate schedule 
+    /// { { 10, 0.5 }, { 100, 0.3 }, { 20, 0.2 } } indicates that the rate of 0.5 should be
+    /// used for the first 10 units (equivalently, samples if the default unit = 1 is used)
+    /// followed by 0.3 for the next 100 units, and then 0.2 for the remaining 20 units or 
+    /// until the end of training if it takes longer.
     ///
     template <typename T>
     class TrainingParameterSchedule
@@ -2613,7 +2614,7 @@ namespace CNTK
         ///
         /// Returns a value corresponding to the absolute sample count from the beginning of training.
         ///
-        CNTK_API virtual const T& operator[](size_t samleCount) const;
+        CNTK_API virtual const T& operator[](size_t sampleCount) const;
 
         CNTK_API virtual ~TrainingParameterSchedule();
 
@@ -2622,42 +2623,42 @@ namespace CNTK
         CNTK_API TrainingParameterSchedule<T>& operator=(const TrainingParameterSchedule<T>&); 
         CNTK_API TrainingParameterSchedule<T>& operator=(TrainingParameterSchedule<T>&&);
     
-    private:
-        // Private constructor with reversed order of arguments to avoid ambiguity with the constructor 
-        // above that takes the list of pairs as its first argument.
-        CNTK_API TrainingParameterSchedule(size_t unit, std::map<size_t, T>&& schedule);
-            
+    protected:           
         std::map<size_t, T> m_schedule;
         size_t m_unit;
-
-        friend class MomentumValuesAsTimeConstants;
     };
 
     typedef TrainingParameterSchedule<double> LearningRatesPerSample;
     typedef TrainingParameterSchedule<double> MomentumValuesPerSample;
 
-    class MomentumValuesAsTimeConstants: public TrainingParameterSchedule<int>
+    ///
+    /// This class allows to specify momentum as time constant in place of momentum per sample in 
+    /// all of Learners factory methods. The specified values are then automatically converted into 
+    /// per sample values.
+    /// 
+    class MomentumValuesAsTimeConstants: public TrainingParameterSchedule<double>
     {
     public:
-        // TODO: replace with using TrainingParameterSchedule::TrainingParameterSchedule once we're on VS2015
-        MomentumValuesAsTimeConstants(int value) 
+        MomentumValuesAsTimeConstants(double value) 
             : TrainingParameterSchedule(value)
-        { }
+        { 
+            ConvertToPerSampleValues();
+        }
         
-        MomentumValuesAsTimeConstants(const std::vector<int>& schedule, size_t unit = 1) 
+        MomentumValuesAsTimeConstants(const std::vector<double>& schedule, size_t unit = 1) 
             : TrainingParameterSchedule(schedule, unit)
-        { }
+        { 
+            ConvertToPerSampleValues();
+        }
         
-        MomentumValuesAsTimeConstants(const std::vector<const std::pair<size_t, int>>& schedule, size_t unit = 1) 
+        MomentumValuesAsTimeConstants(const std::vector<const std::pair<size_t, double>>& schedule, size_t unit = 1) 
             : TrainingParameterSchedule(schedule, unit)
-        { }
+        { 
+            ConvertToPerSampleValues();
+        }
 
-        ///
-        /// This allows to specify momentum as time constant in place of momentum per sample in 
-        /// all of Learners factory methods. The specified values are then automatically converted into 
-        /// per sample values.
-        /// 
-        CNTK_API operator MomentumValuesPerSample() const;
+    private:
+        CNTK_API void ConvertToPerSampleValues();
     };
 
     /// A collection of additional options that affect parameter updates and 

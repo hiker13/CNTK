@@ -163,13 +163,13 @@ void TestTrainingParametersSchedule()
     assert(schedule10[50] == 0.2);
     assert(schedule10[100] == 0.2);
 
-    MomentumValuesAsTimeConstants schedule11 = { { 0, 1, 2 }, 10 };
-    assert(schedule11[0] == 0);
-    assert(schedule11[9] == 0);
-    assert(schedule11[10] == 1);
-    assert(schedule11[19] == 1);
-    assert(schedule11[20] == 2);
-    assert(schedule11[30] == 2);
+    MomentumValuesAsTimeConstants schedule11 = { { 0.0, 1.0, 2.0 }, 10 };
+    assert(schedule11[0] == 0.0);
+    assert(schedule11[9] == 0.0);
+    assert(schedule11[10] == exp(-1.0 / 1.0));
+    assert(schedule11[19] == exp(-1.0 / 1.0));
+    assert(schedule11[20] == exp(-1.0 / 2.0));
+    assert(schedule11[30] == exp(-1.0 / 2.0));
 
     MomentumValuesPerSample schedule12 = schedule11;
     assert(schedule12[0] == 0.0);
@@ -180,23 +180,23 @@ void TestTrainingParametersSchedule()
     assert(schedule12[30] == exp(-1.0 / 2.0));
 
     MomentumValuesAsTimeConstants schedule13 = 1;
-    assert(schedule13[0] == 1);
-    assert(schedule13[1] == 1);
-    assert(schedule13[100] == 1);
+    assert(schedule13[0] == exp(-1.0 / 1.0));
+    assert(schedule13[1] == exp(-1.0 / 1.0));
+    assert(schedule13[100] == exp(-1.0 / 1.0));
 
-    MomentumValuesAsTimeConstants schedule14 = { { 1, 2, 3 } };
-    assert(schedule14[0] == 1);
-    assert(schedule14[1] == 2);
-    assert(schedule14[2] == 3);
-    assert(schedule14[100] == 3);
+    MomentumValuesAsTimeConstants schedule14 = { { 1.0, 2.0, 3.0 } };
+    assert(schedule14[0] == exp(-1.0 / 1.0));
+    assert(schedule14[1] == exp(-1.0 / 2.0));
+    assert(schedule14[2] == exp(-1.0 / 3.0));
+    assert(schedule14[100] == exp(-1.0 / 3.0));
     
-    MomentumValuesAsTimeConstants schedule15 = { { { 100, 7 }, { 10, 5 }, { 1, 3 } }, 100 };
-    assert(schedule15[0] == 7);
-    assert(schedule15[9999] == 7);
-    assert(schedule15[10000] == 5);
-    assert(schedule15[10999] == 5);
-    assert(schedule15[11000] == 3);
-    assert(schedule15[99999] == 3);
+    MomentumValuesAsTimeConstants schedule15 = { { { 100, 7.0 }, { 10, 5.0 }, { 1, 3.0 } }, 100 };
+    assert(schedule15[0] == exp(-1.0 / 7.0));
+    assert(schedule15[9999] == exp(-1.0 / 7.0));
+    assert(schedule15[10000] == exp(-1.0 / 5.0));
+    assert(schedule15[10999] == exp(-1.0 / 5.0));
+    assert(schedule15[11000] == exp(-1.0 / 3.0));
+    assert(schedule15[99999] == exp(-1.0 / 3.0));
 }
 
 
