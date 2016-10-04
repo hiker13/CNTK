@@ -423,8 +423,15 @@ namespace CNTK
         DataType outputDataType = DataType::Unknown;
         NDShape outputShape;
         size_t i = 0;
-        while ((outputDataType == DataType::Unknown) && (i < inputs.size()))
-            outputDataType = inputs[i++].GetDataType();
+        while (i < inputs.size())
+        {
+            auto inputDataType = inputs[i++].GetDataType();
+            if (outputDataType == DataType::Unknown)
+                outputDataType = inputDataType;
+            else
+                if ((inputDataType != DataType::Unknown) && (inputDataType != outputDataType))
+                    InvalidArgument("Primitive function with op type %S has operands with different DataTypes %s and %s", PrimitiveOpTypeName(op).c_str(), DataTypeName(outputDataType), DataTypeName(inputDataType));
+        }
 
         if (outputDataType == DataType::Unknown)
             InvalidArgument("The DataType of all the input operands of primitive function with op type %S are unknown", PrimitiveOpTypeName(op).c_str());
@@ -2219,6 +2226,12 @@ namespace CNTK
                             size_t maxTempMemSizeInSamples,
                             const std::wstring& name)
     {
+        // Currently we require that the Convolution function's operand have a dynamic axis since otherwise
+        // the internal implementation incorrectly infers the batch axis dimension by picking up the first axis as 
+        // the sample shape and considering the rest to be part of the batch axis
+        if (operand.DynamicAxes().empty())
+            LogicError("Convolution currently requires the main operand to have dynamic axes");
+
         auto additionalProperties = Dictionary();
         additionalProperties[PrimitiveFunction::AttributeNameStrides] = strides;
         additionalProperties[PrimitiveFunction::AttributeNameSharing] = AsDictionaryValueVector(sharing);
